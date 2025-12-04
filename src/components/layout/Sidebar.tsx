@@ -1,6 +1,5 @@
-import { useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
-import { cn } from '@/lib/utils';
+import { NavLink, useLocation } from "react-router-dom";
+import { cn } from "@/lib/utils";
 import {
   Glasses,
   LayoutDashboard,
@@ -12,9 +11,9 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -24,12 +23,12 @@ interface SidebarProps {
 }
 
 const menuItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
-  { icon: Package, label: 'Estoque', path: '/estoque' },
-  { icon: ShoppingCart, label: 'Vendas', path: '/vendas' },
-  { icon: DollarSign, label: 'Financeiro', path: '/financeiro' },
-  { icon: Users, label: 'Clientes', path: '/clientes' },
-  { icon: Settings, label: 'Configurações', path: '/configuracoes' },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/" },
+  { icon: Package, label: "Estoque", path: "/estoque" },
+  { icon: ShoppingCart, label: "Vendas", path: "/vendas" },
+  { icon: DollarSign, label: "Financeiro", path: "/financeiro" },
+  { icon: Users, label: "Clientes", path: "/clientes" },
+  { icon: Settings, label: "Configurações", path: "/configuracoes" },
 ];
 
 export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: SidebarProps) {
@@ -57,6 +56,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
           size="icon"
           className="lg:hidden text-sidebar-foreground hover:bg-sidebar-accent"
           onClick={onMobileClose}
+          aria-label="Fechar menu"
         >
           <X className="w-5 h-5" />
         </Button>
@@ -72,28 +72,28 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
             <NavLink
               to={item.path}
               onClick={onMobileClose}
+              aria-label={item.label}
               className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 group',
+                "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 group",
                 isActive
-                  ? 'gradient-primary text-primary-foreground shadow-lg glow-primary'
-                  : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent'
+                  ? "gradient-primary text-primary-foreground shadow-lg glow-primary"
+                  : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent",
               )}
               style={{ animationDelay: `${index * 50}ms` }}
             >
-              <Icon className={cn(
-                'w-5 h-5 transition-transform duration-300',
-                !isActive && 'group-hover:scale-110'
-              )} />
-              {!collapsed && (
-                <span className="font-medium">{item.label}</span>
-              )}
+              <Icon
+                className={cn("w-5 h-5 transition-transform duration-300", !isActive && "group-hover:scale-110")}
+              />
+              {!collapsed && <span className="font-medium">{item.label}</span>}
             </NavLink>
           );
 
           if (collapsed) {
             return (
               <Tooltip key={item.path} delayDuration={0}>
-                <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
+                <TooltipTrigger asChild>
+                  <div onClick={onMobileClose}>{linkContent}</div>
+                </TooltipTrigger>
                 <TooltipContent side="right" className="font-medium">
                   {item.label}
                 </TooltipContent>
@@ -123,9 +123,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
           )}
         </Button>
         {!collapsed && (
-          <p className="text-xs text-sidebar-foreground/40 text-center mt-2 animate-fade-in">
-            v1.0.0
-          </p>
+          <p className="text-xs text-sidebar-foreground/40 text-center mt-2 animate-fade-in">v1.0.0</p>
         )}
       </div>
     </div>
@@ -144,8 +142,8 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
       {/* Mobile Sidebar */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 w-64 gradient-sidebar border-r border-sidebar-border lg:hidden transition-transform duration-300',
-          mobileOpen ? 'translate-x-0' : '-translate-x-full'
+          "fixed inset-y-0 left-0 z-50 w-64 gradient-sidebar border-r border-sidebar-border lg:hidden transition-transform duration-300",
+          mobileOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
         {sidebarContent}
@@ -154,8 +152,8 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
       {/* Desktop Sidebar */}
       <aside
         className={cn(
-          'hidden lg:flex flex-col gradient-sidebar border-r border-sidebar-border transition-all duration-300',
-          collapsed ? 'w-20' : 'w-64'
+          "hidden lg:flex flex-col gradient-sidebar border-r border-sidebar-border transition-all duration-300",
+          collapsed ? "w-20" : "w-64",
         )}
       >
         {sidebarContent}

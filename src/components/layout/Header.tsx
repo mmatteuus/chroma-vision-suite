@@ -1,6 +1,7 @@
 import { Menu, Search, Bell, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ThemeToggle } from './ThemeToggle';
 
 interface HeaderProps {
   title: string;
@@ -17,6 +18,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
           size="icon"
           className="lg:hidden"
           onClick={onMenuClick}
+          aria-label="Abrir menu"
         >
           <Menu className="w-5 h-5" />
         </Button>
@@ -39,8 +41,9 @@ export function Header({ title, onMenuClick }: HeaderProps) {
 
       {/* Right side */}
       <div className="flex items-center gap-2">
+        <ThemeToggle />
         {/* Notifications */}
-        <Button variant="ghost" size="icon" className="relative hidden sm:flex hover:bg-muted">
+        <Button variant="ghost" size="icon" className="relative hidden sm:flex hover:bg-muted" aria-label="Notificações">
           <Bell className="w-5 h-5" />
           <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full animate-pulse-soft" />
         </Button>

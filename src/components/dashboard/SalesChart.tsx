@@ -6,19 +6,18 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-} from 'recharts';
+} from "recharts";
 
-const data = [
-  { name: 'Seg', vendas: 2400 },
-  { name: 'Ter', vendas: 1398 },
-  { name: 'Qua', vendas: 3800 },
-  { name: 'Qui', vendas: 3908 },
-  { name: 'Sex', vendas: 4800 },
-  { name: 'Sáb', vendas: 3800 },
-  { name: 'Dom', vendas: 1200 },
-];
+export interface SalesChartPoint {
+  name: string;
+  vendas: number;
+}
 
-export function SalesChart() {
+interface SalesChartProps {
+  data: SalesChartPoint[];
+}
+
+export function SalesChart({ data }: SalesChartProps) {
   return (
     <ResponsiveContainer width="100%" height={280}>
       <AreaChart data={data}>
@@ -29,24 +28,20 @@ export function SalesChart() {
           </linearGradient>
         </defs>
         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-        <XAxis 
-          dataKey="name" 
-          stroke="hsl(var(--muted-foreground))"
-          fontSize={12}
-        />
-        <YAxis 
+        <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+        <YAxis
           stroke="hsl(var(--muted-foreground))"
           fontSize={12}
           tickFormatter={(value) => `R$${value}`}
         />
         <Tooltip
           contentStyle={{
-            backgroundColor: 'hsl(var(--card))',
-            border: '1px solid hsl(var(--border))',
-            borderRadius: '8px',
+            backgroundColor: "hsl(var(--card))",
+            border: "1px solid hsl(var(--border))",
+            borderRadius: "8px",
           }}
-          labelStyle={{ color: 'hsl(var(--foreground))' }}
-          formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR')}`, 'Vendas']}
+          labelStyle={{ color: "hsl(var(--foreground))" }}
+          formatter={(value: number) => [`R$ ${value.toLocaleString("pt-BR")}`, "Vendas"]}
         />
         <Area
           type="monotone"

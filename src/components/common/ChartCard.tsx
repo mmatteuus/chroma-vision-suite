@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, type CSSProperties } from 'react';
 import { cn } from '@/lib/utils';
 
 interface ChartCardProps {
@@ -7,7 +7,7 @@ interface ChartCardProps {
   children: ReactNode;
   className?: string;
   action?: ReactNode;
-  style?: React.CSSProperties;
+  style?: CSSProperties;
 }
 
 export function ChartCard({ title, subtitle, children, className, action, style }: ChartCardProps) {
