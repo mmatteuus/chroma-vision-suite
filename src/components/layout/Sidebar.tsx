@@ -35,7 +35,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
   const location = useLocation();
 
   const sidebarContent = (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-h-screen">
       {/* Logo */}
       <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
@@ -153,6 +153,8 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
       <aside
         className={cn(
           "hidden lg:flex flex-col gradient-sidebar border-r border-sidebar-border transition-all duration-300",
+          "lg:sticky lg:top-0 lg:left-0 lg:h-screen lg:min-h-screen",
+          "lg:overflow-hidden",
           collapsed ? "w-20" : "w-64",
         )}
       >

@@ -36,6 +36,10 @@ export function MainLayout() {
             <Outlet />
           </div>
         </main>
+
+        <footer className="border-t border-border px-4 lg:px-6 py-3 text-center text-xs text-muted-foreground/80">
+          Desenvolvido por MtsFerreira
+        </footer>
       </div>
     </div>
   );
