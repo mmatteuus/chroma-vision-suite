@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { type CSSProperties, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 interface ListItemCardProps {
@@ -8,7 +8,7 @@ interface ListItemCardProps {
   actions?: ReactNode;
   children?: ReactNode;
   className?: string;
-  style?: React.CSSProperties;
+  style?: CSSProperties;
 }
 
 export function ListItemCard({ title, subtitle, meta, actions, children, className, style }: ListItemCardProps) {

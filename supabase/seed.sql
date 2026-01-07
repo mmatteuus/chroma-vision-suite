@@ -1,0 +1,1 @@
+-- Seeds iniciais (vazio por enquanto)
