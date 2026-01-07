@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { useMockQuery } from "@/hooks/useMockQuery";
+import { useProducts } from "@/hooks/useProducts";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -93,8 +93,8 @@ export default function Estoque() {
   const [categoryFilter, setCategoryFilter] = useState<ProductCategory | "all">("all");
   const [stockFilter, setStockFilter] = useState<"all" | "low" | "normal">("all");
 
-  const { data, isLoading, isFetching, isError, refetch } = useMockQuery(["inventory"], inventorySeed);
-  const products = data ?? [];
+  const { data: productsData, isLoading, isFetching, isError, refetch } = useProducts();
+  const products = productsData ?? inventorySeed;
   const loading = isLoading || isFetching;
   const isMobile = useIsMobile();
 
