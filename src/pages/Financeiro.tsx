@@ -35,12 +35,14 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { cn } from "@/lib/utils";
-import { useMockQuery } from "@/hooks/useMockQuery";
+import { useFinancialTransactions } from "@/hooks/useFinancialTransactions";
+import { useCreateTransaction } from "@/hooks/useSupabaseMutations";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { FilterBar } from "@/components/common/FilterBar";
 import { ListItemCard } from "@/components/common/ListItemCard";
+import { Label } from "@/components/ui/label";
 
 type TransactionType = "entrada" | "saida";
 type TransactionStatus = "concluído" | "pendente";
@@ -114,11 +116,19 @@ function ChartSkeleton() {
 export default function Financeiro() {
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState<TransactionType | "all">("all");
+  const createTransaction = useCreateTransaction();
+  const [transactionForm, setTransactionForm] = useState({
+    kind: "entrada" as TransactionType,
+    category: "",
+    amount: "",
+    status: "pending",
+    description: "",
+  });
 
-  const { data, isLoading, isFetching, isError, refetch } = useMockQuery(["finance"], financeSeed);
+  const { data, isLoading, isFetching, isError, refetch } = useFinancialTransactions();
   const loading = isLoading || isFetching;
-  const transactions = data?.transactions ?? [];
-  const chartData = data?.chartData ?? [];
+  const transactions = data ?? financeSeed.transactions;
+  const chartData = financeSeed.chartData;
   const isMobile = useIsMobile();
 
   const filteredTransactions = transactions.filter((t) => {
@@ -236,6 +246,90 @@ export default function Financeiro() {
           </SelectContent>
         </Select>
       </FilterBar>
+
+      <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+        <p className="text-sm font-medium text-muted-foreground">Registrar movimentação</p>
+        <form
+          className="grid gap-3 sm:grid-cols-2"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (createTransaction.isLoading) return;
+            createTransaction.mutate({
+              kind: transactionForm.kind,
+              category: transactionForm.category,
+              amount: Number(transactionForm.amount),
+              status: transactionForm.status,
+              description: transactionForm.description || null,
+            });
+          }}
+        >
+          <div className="space-y-1">
+            <Label htmlFor="transactionKind">Tipo</Label>
+            <Select
+              value={transactionForm.kind}
+              onValueChange={(value) => setTransactionForm((prev) => ({ ...prev, kind: value as TransactionType }))}
+            >
+              <SelectTrigger id="transactionKind" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="entrada">Entrada</SelectItem>
+                <SelectItem value="saida">Saída</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="transactionStatus">Status</Label>
+            <Select
+              value={transactionForm.status}
+              onValueChange={(value) => setTransactionForm((prev) => ({ ...prev, status: value }))}
+            >
+              <SelectTrigger id="transactionStatus" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pendente">Pendente</SelectItem>
+                <SelectItem value="completed">Concluído</SelectItem>
+                <SelectItem value="cancelado">Cancelado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="transactionCategory">Categoria</Label>
+            <Input
+              id="transactionCategory"
+              value={transactionForm.category}
+              onChange={(event) => setTransactionForm((prev) => ({ ...prev, category: event.target.value }))}
+              required
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="transactionAmount">Valor</Label>
+            <Input
+              id="transactionAmount"
+              type="number"
+              step="0.01"
+              value={transactionForm.amount}
+              onChange={(event) => setTransactionForm((prev) => ({ ...prev, amount: event.target.value }))}
+              required
+            />
+          </div>
+          <div className="space-y-1 sm:col-span-2">
+            <Label htmlFor="transactionDescription">Descrição</Label>
+            <Input
+              id="transactionDescription"
+              value={transactionForm.description}
+              onChange={(event) => setTransactionForm((prev) => ({ ...prev, description: event.target.value }))}
+              required
+            />
+          </div>
+          <div className="sm:col-span-2 flex justify-end">
+            <Button type="submit" disabled={createTransaction.isLoading}>
+              {createTransaction.isLoading ? "Registrando..." : "Registrar movimentação"}
+            </Button>
+          </div>
+        </form>
+      </div>
 
       {/* Transactions List */}
       {isError ? (

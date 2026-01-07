@@ -24,6 +24,8 @@ Sistema web para gestão de óticas, com dashboards, estoque, vendas, financeiro
 3. Ajuste tokens de tema em `src/index.css` e utilitários Tailwind em `tailwind.config.ts` se precisar de personalização visual.
 4. Utilize `src/hooks/useMockQuery.ts` para dados simulados enquanto a API não está conectada.
 
+- Veja `docs/supabase.md` para o passo a passo da integração com Supabase (env vars, CLI/migrations, seeds e deploy na Vercel).
+
 ## Notas
 
 - Tema claro/escuro já preparado via tokens CSS; adicione um toggle global se necessário.

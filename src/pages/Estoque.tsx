@@ -30,6 +30,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { FilterBar } from "@/components/common/FilterBar";
+import { useCreateProduct } from "@/hooks/useSupabaseMutations";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type ProductCategory = "Óculos de Sol" | "Armações" | "Lentes" | "Acessórios";
 
@@ -97,6 +100,33 @@ export default function Estoque() {
   const products = productsData ?? inventorySeed;
   const loading = isLoading || isFetching;
   const isMobile = useIsMobile();
+  const createProduct = useCreateProduct();
+  const [formValues, setFormValues] = useState({
+    name: "",
+    sku: "",
+    category: "",
+    brand: "",
+    price: "",
+    minStock: "",
+  });
+
+  const handleProductInput = (field: keyof typeof formValues, value: string) => {
+    setFormValues((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleAddProduct = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (createProduct.isLoading) return;
+    const payload = {
+      name: formValues.name,
+      sku: formValues.sku,
+      category: formValues.category,
+      brand: formValues.brand,
+      price: Number(formValues.price),
+      min_stock: Number(formValues.minStock),
+    };
+    createProduct.mutate(payload);
+  };
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
@@ -219,6 +249,75 @@ export default function Estoque() {
           </div>
         </div>
       </FilterBar>
+
+      <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+        <p className="text-sm font-medium text-muted-foreground">Adicionar produto</p>
+        <form className="grid gap-3 sm:grid-cols-2" onSubmit={handleAddProduct}>
+          <div className="space-y-1">
+            <Label htmlFor="productName">Nome</Label>
+            <Input
+              id="productName"
+              value={formValues.name}
+              onChange={(event) => handleProductInput("name", event.target.value)}
+              required
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="productSku">SKU</Label>
+            <Input
+              id="productSku"
+              value={formValues.sku}
+              onChange={(event) => handleProductInput("sku", event.target.value)}
+              required
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="productCategory">Categoria</Label>
+            <Input
+              id="productCategory"
+              value={formValues.category}
+              onChange={(event) => handleProductInput("category", event.target.value)}
+              required
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="productBrand">Marca</Label>
+            <Input
+              id="productBrand"
+              value={formValues.brand}
+              onChange={(event) => handleProductInput("brand", event.target.value)}
+              required
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="productPrice">Preço</Label>
+            <Input
+              id="productPrice"
+              type="number"
+              step="0.01"
+              value={formValues.price}
+              onChange={(event) => handleProductInput("price", event.target.value)}
+              required
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="productMinStock">Estoque mínimo</Label>
+            <Input
+              id="productMinStock"
+              type="number"
+              step="1"
+              value={formValues.minStock}
+              onChange={(event) => handleProductInput("minStock", event.target.value)}
+              required
+            />
+          </div>
+          <div className="sm:col-span-2 flex justify-end">
+            <Button type="submit" disabled={createProduct.isLoading}>
+              {createProduct.isLoading ? "Adicionando..." : "Adicionar ao estoque"}
+            </Button>
+          </div>
+        </form>
+      </div>
 
       {/* Products */}
       {isError ? (

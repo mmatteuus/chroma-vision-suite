@@ -17,8 +17,10 @@ import { StatsCard } from "@/components/common/StatsCard";
 import { EmptyState } from "@/components/common/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { useMockQuery } from "@/hooks/useMockQuery";
+import { useCustomers } from "@/hooks/useCustomers";
+import { useCreateCustomer } from "@/hooks/useSupabaseMutations";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -87,10 +89,17 @@ function CardSkeleton() {
 export default function Clientes() {
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { data, isLoading, isFetching, isError, refetch } = useMockQuery(["customers"], customerSeed);
-  const customers = data ?? [];
+  const { data, isLoading, isFetching, isError, refetch } = useCustomers();
+  const customers = data ?? customerSeed;
   const loading = isLoading || isFetching;
   const isMobile = useIsMobile();
+  const createCustomer = useCreateCustomer();
+  const [customerForm, setCustomerForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    city: "",
+  });
 
   const filteredCustomers = customers.filter(
     (c) =>
@@ -144,6 +153,64 @@ export default function Clientes() {
           />
         </div>
       </FilterBar>
+
+      <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+        <p className="text-sm font-medium text-muted-foreground">Cadastrar cliente manual</p>
+        <form
+          className="grid gap-3 sm:grid-cols-2"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (createCustomer.isLoading) return;
+            createCustomer.mutate({
+              name: customerForm.name,
+              email: customerForm.email,
+              phone: customerForm.phone || undefined,
+              city: customerForm.city || undefined,
+            });
+          }}
+        >
+          <div className="space-y-1">
+            <Label htmlFor="newClientName">Nome</Label>
+            <Input
+              id="newClientName"
+              value={customerForm.name}
+              onChange={(event) => setCustomerForm((prev) => ({ ...prev, name: event.target.value }))}
+              required
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="newClientEmail">Email</Label>
+            <Input
+              id="newClientEmail"
+              type="email"
+              value={customerForm.email}
+              onChange={(event) => setCustomerForm((prev) => ({ ...prev, email: event.target.value }))}
+              required
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="newClientPhone">Telefone</Label>
+            <Input
+              id="newClientPhone"
+              value={customerForm.phone}
+              onChange={(event) => setCustomerForm((prev) => ({ ...prev, phone: event.target.value }))}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="newClientCity">Cidade</Label>
+            <Input
+              id="newClientCity"
+              value={customerForm.city}
+              onChange={(event) => setCustomerForm((prev) => ({ ...prev, city: event.target.value }))}
+            />
+          </div>
+          <div className="sm:col-span-2 flex justify-end">
+            <Button type="submit" disabled={createCustomer.isLoading}>
+              {createCustomer.isLoading ? "Cadastrando..." : "Cadastrar cliente"}
+            </Button>
+          </div>
+        </form>
+      </div>
 
       {/* Customers List */}
       {isError ? (

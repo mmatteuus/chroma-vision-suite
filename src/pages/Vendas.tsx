@@ -13,15 +13,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { useMockQuery } from "@/hooks/useMockQuery";
+import { useSalesOrders } from "@/hooks/useSalesOrders";
+import { useCreateSale } from "@/hooks/useSupabaseMutations";
+import { useCustomers } from "@/hooks/useCustomers";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { FilterBar } from "@/components/common/FilterBar";
 import { ListItemCard } from "@/components/common/ListItemCard";
 
-type SaleStatus = "concluído" | "pendente" | "cancelado";
+type SaleStatus = "pago" | "pendente" | "cancelado" | "rascunho";
 
 interface Sale {
   id: number;
@@ -34,18 +37,19 @@ interface Sale {
 }
 
 const salesSeed: Sale[] = [
-  { id: 1, date: "04/12/2024", customer: "Maria Silva", items: 2, total: 1250.0, status: "concluído", channel: "Loja Física" },
+  { id: 1, date: "04/12/2024", customer: "Maria Silva", items: 2, total: 1250.0, status: "pago", channel: "Loja Física" },
   { id: 2, date: "04/12/2024", customer: "João Santos", items: 1, total: 890.0, status: "pendente", channel: "WhatsApp" },
-  { id: 3, date: "03/12/2024", customer: "Ana Costa", items: 3, total: 2100.0, status: "concluído", channel: "Loja Física" },
+  { id: 3, date: "03/12/2024", customer: "Ana Costa", items: 3, total: 2100.0, status: "pago", channel: "Loja Física" },
   { id: 4, date: "03/12/2024", customer: "Pedro Lima", items: 1, total: 450.0, status: "cancelado", channel: "Instagram" },
-  { id: 5, date: "02/12/2024", customer: "Carla Souza", items: 2, total: 1780.0, status: "concluído", channel: "Loja Física" },
-  { id: 6, date: "02/12/2024", customer: "Roberto Alves", items: 1, total: 650.0, status: "concluído", channel: "WhatsApp" },
+  { id: 5, date: "02/12/2024", customer: "Carla Souza", items: 2, total: 1780.0, status: "pago", channel: "Loja Física" },
+  { id: 6, date: "02/12/2024", customer: "Roberto Alves", items: 1, total: 650.0, status: "pago", channel: "WhatsApp" },
 ];
 
 const statusStyles: Record<SaleStatus, string> = {
-  concluído: "bg-success/10 text-success border-success/20",
+  pago: "bg-success/10 text-success border-success/20",
   pendente: "bg-warning/10 text-warning border-warning/20",
   cancelado: "bg-destructive/10 text-destructive border-destructive/20",
+  rascunho: "bg-info/10 text-info border-info/20",
 };
 
 function ErrorState({ onRetry }: { onRetry: () => void }) {
@@ -94,9 +98,16 @@ function ListSkeleton() {
 export default function Vendas() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<SaleStatus | "all">("all");
+  const [saleForm, setSaleForm] = useState({
+    customerId: "",
+    total: "",
+    paymentMethod: "",
+    status: "pago" as SaleStatus,
+    notes: "",
+  });
 
-  const { data, isLoading, isFetching, isError, refetch } = useMockQuery(["sales"], salesSeed);
-  const sales = data ?? [];
+  const { data, isLoading, isFetching, isError, refetch } = useSalesOrders();
+  const sales = data ?? salesSeed;
   const loading = isLoading || isFetching;
   const isMobile = useIsMobile();
 
@@ -171,6 +182,94 @@ export default function Vendas() {
           </SelectContent>
         </Select>
       </FilterBar>
+
+      <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+        <p className="text-sm font-medium text-muted-foreground">Registrar nova venda</p>
+        <form
+          className="grid gap-3 sm:grid-cols-2"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (createSale.isLoading) return;
+            createSale.mutate({
+              customer_id: saleForm.customerId ? Number(saleForm.customerId) : null,
+              status: saleForm.status,
+              payment_method: saleForm.paymentMethod,
+              total: Number(saleForm.total),
+              notes: saleForm.notes || null,
+            });
+          }}
+        >
+          <div className="space-y-1">
+            <Label htmlFor="saleCustomer">Cliente</Label>
+            <Select
+              value={saleForm.customerId}
+              onValueChange={(value) => setSaleForm((prev) => ({ ...prev, customerId: value }))}
+            >
+              <SelectTrigger id="saleCustomer" className="w-full">
+                <SelectValue placeholder="Selecione o cliente" />
+              </SelectTrigger>
+              <SelectContent>
+                {customers.map((customer) => (
+                  <SelectItem key={customer.id} value={customer.id.toString()}>
+                    {customer.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="saleStatus">Status</Label>
+            <Select
+              value={saleForm.status}
+              onValueChange={(value) => setSaleForm((prev) => ({ ...prev, status: value as SaleStatus }))}
+            >
+              <SelectTrigger id="saleStatus" className="w-full">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                {["rascunho", "pendente", "pago", "cancelado"].map((status) => (
+                  <SelectItem key={status} value={status}>
+                    {status}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="saleTotal">Total</Label>
+            <Input
+              id="saleTotal"
+              type="number"
+              step="0.01"
+              value={saleForm.total}
+              onChange={(event) => setSaleForm((prev) => ({ ...prev, total: event.target.value }))}
+              required
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="saleMethod">Forma de pagamento</Label>
+            <Input
+              id="saleMethod"
+              value={saleForm.paymentMethod}
+              onChange={(event) => setSaleForm((prev) => ({ ...prev, paymentMethod: event.target.value }))}
+              required
+            />
+          </div>
+          <div className="space-y-1 sm:col-span-2">
+            <Label htmlFor="saleNotes">Observações</Label>
+            <Input
+              id="saleNotes"
+              value={saleForm.notes}
+              onChange={(event) => setSaleForm((prev) => ({ ...prev, notes: event.target.value }))}
+            />
+          </div>
+          <div className="sm:col-span-2 flex justify-end">
+            <Button type="submit" disabled={createSale.isLoading}>
+              {createSale.isLoading ? "Registrando..." : "Criar venda"}
+            </Button>
+          </div>
+        </form>
+      </div>
 
       {/* Sales List */}
       {isError ? (
