@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   Plus,
   Download,
@@ -148,6 +148,8 @@ export default function Estoque() {
   const loading = isLoading || isFetching;
   const isMobile = useIsMobile();
   const createProduct = useCreateProduct();
+  const addProductSectionRef = useRef<HTMLDivElement>(null);
+  const productNameInputRef = useRef<HTMLInputElement>(null);
   const [formValues, setFormValues] = useState({
     name: "",
     sku: "",
@@ -175,29 +177,79 @@ export default function Estoque() {
     createProduct.mutate(payload);
   };
 
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch =
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.sku.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = categoryFilter === "all" || product.category === categoryFilter;
-    const matchesStock =
-      stockFilter === "all" ||
-      (stockFilter === "low" && product.stock <= product.minStock) ||
-      (stockFilter === "normal" && product.stock > product.minStock);
-    return matchesSearch && matchesCategory && matchesStock;
-  });
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      const matchesSearch =
+        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.sku.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = categoryFilter === "all" || product.category === categoryFilter;
+      const matchesStock =
+        stockFilter === "all" ||
+        (stockFilter === "low" && product.stock <= product.minStock) ||
+        (stockFilter === "normal" && product.stock > product.minStock);
+      return matchesSearch && matchesCategory && matchesStock;
+    });
+  }, [products, searchTerm, categoryFilter, stockFilter]);
 
   const totalProducts = products.length;
   const lowStockCount = products.filter((p) => p.stock <= p.minStock).length;
   const totalValue = products.reduce((acc, p) => acc + p.price * p.stock, 0);
 
+  const handleScrollToAddProduct = () => {
+    addProductSectionRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (productNameInputRef.current) {
+      productNameInputRef.current.focus({ preventScroll: true });
+    }
+  };
+
+  const handleExportInventory = () => {
+    if (filteredProducts.length === 0 || typeof window === "undefined") {
+      return;
+    }
+
+    const headers = ["SKU", "Nome", "Categoria", "Marca", "Estoque atual", "Estoque mínimo", "Preço (R$)"];
+    const rows = filteredProducts.map((product) => [
+      product.sku,
+      product.name,
+      product.category,
+      product.brand,
+      product.stock,
+      product.minStock,
+      product.price.toFixed(2),
+    ]);
+
+    const escapeCell = (value: string | number) => `"${String(value).replace(/"/g, '""')}"`;
+    const csvContent = [headers, ...rows]
+      .map((row) => row.map((cell) => escapeCell(cell)).join(","))
+      .join("\r\n");
+
+    const blob = new Blob([`\uFEFF${csvContent}`], { type: "text/csv;charset=utf-8;" });
+    const fileName = `estoque-${new Date().toISOString().slice(0, 10)}.csv`;
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = fileName;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader title="Gestão de Estoque" description={`${totalProducts} produtos • ${lowStockCount} com estoque baixo`}>
-        <Button variant="outline" size="icon" aria-label="Exportar estoque">
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          aria-label="Exportar estoque"
+          onClick={handleExportInventory}
+          disabled={loading || filteredProducts.length === 0}
+        >
           <Download className="w-4 h-4" />
         </Button>
-        <Button className="gradient-primary text-primary-foreground hover:opacity-90 transition-opacity">
+        <Button
+          type="button"
+          className="gradient-primary text-primary-foreground hover:opacity-90 transition-opacity"
+          onClick={handleScrollToAddProduct}
+        >
           <Plus className="w-4 h-4 mr-2" />
           Novo Produto
         </Button>
@@ -297,12 +349,13 @@ export default function Estoque() {
         </div>
       </FilterBar>
 
-      <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+      <div ref={addProductSectionRef} className="bg-card border border-border rounded-xl p-4 space-y-3">
         <p className="text-sm font-medium text-muted-foreground">Adicionar produto</p>
         <form className="grid gap-3 sm:grid-cols-2" onSubmit={handleAddProduct}>
           <div className="space-y-1">
             <Label htmlFor="productName">Nome</Label>
             <Input
+              ref={productNameInputRef}
               id="productName"
               value={formValues.name}
               onChange={(event) => handleProductInput("name", event.target.value)}
