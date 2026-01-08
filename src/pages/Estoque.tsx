@@ -25,36 +25,83 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { useProducts } from "@/hooks/useProducts";
+import { Product, useProducts } from "@/hooks/useProducts";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { FilterBar } from "@/components/common/FilterBar";
 import { useCreateProduct } from "@/hooks/useSupabaseMutations";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 type ProductCategory = "Óculos de Sol" | "Armações" | "Lentes" | "Acessórios";
 
-interface Product {
-  id: number;
-  name: string;
-  ref: string;
-  category: ProductCategory;
-  brand: string;
-  stock: number;
-  minStock: number;
-  price: number;
-  image: string | null;
-}
-
 const inventorySeed: Product[] = [
-  { id: 1, name: "Óculos Ray-Ban Aviador", ref: "RB-3025", category: "Óculos de Sol", brand: "Ray-Ban", stock: 15, minStock: 5, price: 890.0, image: null },
-  { id: 2, name: "Armação Oakley Crosslink", ref: "OK-CL-01", category: "Armações", brand: "Oakley", stock: 8, minStock: 3, price: 650.0, image: null },
-  { id: 3, name: "Lente Transitions Gen 8", ref: "LT-G8-01", category: "Lentes", brand: "Transitions", stock: 3, minStock: 10, price: 420.0, image: null },
-  { id: 4, name: "Óculos Chilli Beans Sport", ref: "CB-SP-22", category: "Óculos de Sol", brand: "Chilli Beans", stock: 22, minStock: 8, price: 320.0, image: null },
-  { id: 5, name: "Estojo Premium Couro", ref: "EST-PR-01", category: "Acessórios", brand: "Genérico", stock: 45, minStock: 15, price: 85.0, image: null },
-  { id: 6, name: "Lente Varilux X Series", ref: "VX-XS-02", category: "Lentes", brand: "Varilux", stock: 2, minStock: 5, price: 1250.0, image: null },
+  {
+    id: 1,
+    name: "Óculos Ray-Ban Aviador",
+    sku: "RB-3025",
+    category: "Óculos de Sol",
+    brand: "Ray-Ban",
+    stock: 15,
+    minStock: 5,
+    price: 890.0,
+    isActive: true,
+  },
+  {
+    id: 2,
+    name: "Armação Oakley Crosslink",
+    sku: "OK-CL-01",
+    category: "Armações",
+    brand: "Oakley",
+    stock: 8,
+    minStock: 3,
+    price: 650.0,
+    isActive: true,
+  },
+  {
+    id: 3,
+    name: "Lente Transitions Gen 8",
+    sku: "LT-G8-01",
+    category: "Lentes",
+    brand: "Transitions",
+    stock: 3,
+    minStock: 10,
+    price: 420.0,
+    isActive: true,
+  },
+  {
+    id: 4,
+    name: "Óculos Chilli Beans Sport",
+    sku: "CB-SP-22",
+    category: "Óculos de Sol",
+    brand: "Chilli Beans",
+    stock: 22,
+    minStock: 8,
+    price: 320.0,
+    isActive: true,
+  },
+  {
+    id: 5,
+    name: "Estojo Premium Couro",
+    sku: "EST-PR-01",
+    category: "Acessórios",
+    brand: "Genérico",
+    stock: 45,
+    minStock: 15,
+    price: 85.0,
+    isActive: true,
+  },
+  {
+    id: 6,
+    name: "Lente Varilux X Series",
+    sku: "VX-XS-02",
+    category: "Lentes",
+    brand: "Varilux",
+    stock: 2,
+    minStock: 5,
+    price: 1250.0,
+    isActive: true,
+  },
 ];
 
 function ErrorState({ onRetry }: { onRetry: () => void }) {
@@ -131,7 +178,7 @@ export default function Estoque() {
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.ref.toLowerCase().includes(searchTerm.toLowerCase());
+      product.sku.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = categoryFilter === "all" || product.category === categoryFilter;
     const matchesStock =
       stockFilter === "all" ||
@@ -386,7 +433,7 @@ export default function Estoque() {
                     <h3 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
                       {product.name}
                     </h3>
-                    <p className="text-xs text-muted-foreground">{product.ref}</p>
+                    <p className="text-xs text-muted-foreground">{product.sku}</p>
                   </div>
                   {product.stock <= product.minStock && (
                     <Badge
