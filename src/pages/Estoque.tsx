@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Plus,
   Download,
@@ -32,8 +32,27 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { FilterBar } from "@/components/common/FilterBar";
 import { useCreateProduct } from "@/hooks/useSupabaseMutations";
 import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 type ProductCategory = "Óculos de Sol" | "Armações" | "Lentes" | "Acessórios";
+
+const initialProductFormValues = {
+  name: "",
+  sku: "",
+  category: "",
+  brand: "",
+  price: "",
+  minStock: "",
+};
 
 const inventorySeed: Product[] = [
   {
@@ -148,16 +167,8 @@ export default function Estoque() {
   const loading = isLoading || isFetching;
   const isMobile = useIsMobile();
   const createProduct = useCreateProduct();
-  const addProductSectionRef = useRef<HTMLDivElement>(null);
-  const productNameInputRef = useRef<HTMLInputElement>(null);
-  const [formValues, setFormValues] = useState({
-    name: "",
-    sku: "",
-    category: "",
-    brand: "",
-    price: "",
-    minStock: "",
-  });
+  const [formValues, setFormValues] = useState(initialProductFormValues);
+  const [isAddProductOpen, setIsAddProductOpen] = useState(false);
 
   const handleProductInput = (field: keyof typeof formValues, value: string) => {
     setFormValues((prev) => ({ ...prev, [field]: value }));
@@ -177,6 +188,13 @@ export default function Estoque() {
     createProduct.mutate(payload);
   };
 
+  useEffect(() => {
+    if (createProduct.isSuccess) {
+      setFormValues(initialProductFormValues);
+      setIsAddProductOpen(false);
+    }
+  }, [createProduct.isSuccess]);
+
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
       const matchesSearch =
@@ -194,13 +212,6 @@ export default function Estoque() {
   const totalProducts = products.length;
   const lowStockCount = products.filter((p) => p.stock <= p.minStock).length;
   const totalValue = products.reduce((acc, p) => acc + p.price * p.stock, 0);
-
-  const handleScrollToAddProduct = () => {
-    addProductSectionRef.current?.scrollIntoView({ behavior: "smooth" });
-    if (productNameInputRef.current) {
-      productNameInputRef.current.focus({ preventScroll: true });
-    }
-  };
 
   const handleExportInventory = () => {
     if (filteredProducts.length === 0 || typeof window === "undefined") {
@@ -245,14 +256,95 @@ export default function Estoque() {
         >
           <Download className="w-4 h-4" />
         </Button>
-        <Button
-          type="button"
-          className="gradient-primary text-primary-foreground hover:opacity-90 transition-opacity"
-          onClick={handleScrollToAddProduct}
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Novo Produto
-        </Button>
+        <Dialog open={isAddProductOpen} onOpenChange={setIsAddProductOpen}>
+          <DialogTrigger asChild>
+            <Button
+              type="button"
+              className="gradient-primary text-primary-foreground hover:opacity-90 transition-opacity"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Novo Produto
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="space-y-6">
+            <DialogHeader>
+              <DialogTitle>Adicionar produto</DialogTitle>
+              <DialogDescription>Preencha os dados abaixo para registrar o item no estoque.</DialogDescription>
+            </DialogHeader>
+            <form className="grid gap-3 sm:grid-cols-2" onSubmit={handleAddProduct}>
+              <div className="space-y-1">
+                <Label htmlFor="productName">Nome</Label>
+                <Input
+                  id="productName"
+                  value={formValues.name}
+                  onChange={(event) => handleProductInput("name", event.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="productSku">SKU</Label>
+                <Input
+                  id="productSku"
+                  value={formValues.sku}
+                  onChange={(event) => handleProductInput("sku", event.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="productCategory">Categoria</Label>
+                <Input
+                  id="productCategory"
+                  value={formValues.category}
+                  onChange={(event) => handleProductInput("category", event.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="productBrand">Marca</Label>
+                <Input
+                  id="productBrand"
+                  value={formValues.brand}
+                  onChange={(event) => handleProductInput("brand", event.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="productPrice">Preço</Label>
+                <Input
+                  id="productPrice"
+                  type="number"
+                  step="0.01"
+                  value={formValues.price}
+                  onChange={(event) => handleProductInput("price", event.target.value)}
+                  inputMode="decimal"
+                  required
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="productMinStock">Estoque mínimo</Label>
+                <Input
+                  id="productMinStock"
+                  type="number"
+                  step="1"
+                  value={formValues.minStock}
+                  onChange={(event) => handleProductInput("minStock", event.target.value)}
+                  inputMode="numeric"
+                  required
+                />
+              </div>
+              <DialogFooter className="mt-3 gap-2">
+                <DialogClose asChild>
+                  <Button variant="outline" type="button" disabled={createProduct.isLoading}>
+                    Cancelar
+                  </Button>
+                </DialogClose>
+                <Button type="submit" disabled={createProduct.isLoading}>
+                  {createProduct.isLoading ? "Adicionando..." : "Adicionar ao estoque"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </PageHeader>
 
       {/* Stats */}
@@ -348,76 +440,6 @@ export default function Estoque() {
           </div>
         </div>
       </FilterBar>
-
-      <div ref={addProductSectionRef} className="bg-card border border-border rounded-xl p-4 space-y-3">
-        <p className="text-sm font-medium text-muted-foreground">Adicionar produto</p>
-        <form className="grid gap-3 sm:grid-cols-2" onSubmit={handleAddProduct}>
-          <div className="space-y-1">
-            <Label htmlFor="productName">Nome</Label>
-            <Input
-              ref={productNameInputRef}
-              id="productName"
-              value={formValues.name}
-              onChange={(event) => handleProductInput("name", event.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="productSku">SKU</Label>
-            <Input
-              id="productSku"
-              value={formValues.sku}
-              onChange={(event) => handleProductInput("sku", event.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="productCategory">Categoria</Label>
-            <Input
-              id="productCategory"
-              value={formValues.category}
-              onChange={(event) => handleProductInput("category", event.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="productBrand">Marca</Label>
-            <Input
-              id="productBrand"
-              value={formValues.brand}
-              onChange={(event) => handleProductInput("brand", event.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="productPrice">Preço</Label>
-            <Input
-              id="productPrice"
-              type="number"
-              step="0.01"
-              value={formValues.price}
-              onChange={(event) => handleProductInput("price", event.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="productMinStock">Estoque mínimo</Label>
-            <Input
-              id="productMinStock"
-              type="number"
-              step="1"
-              value={formValues.minStock}
-              onChange={(event) => handleProductInput("minStock", event.target.value)}
-              required
-            />
-          </div>
-          <div className="sm:col-span-2 flex justify-end">
-            <Button type="submit" disabled={createProduct.isLoading}>
-              {createProduct.isLoading ? "Adicionando..." : "Adicionar ao estoque"}
-            </Button>
-          </div>
-        </form>
-      </div>
 
       {/* Products */}
       {isError ? (
